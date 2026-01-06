@@ -127,8 +127,13 @@ heal.io/
 │   │   └── style.css      # Custom styles
 │   └── js/                # JavaScript files
 │
-└── research&dl/           # Research notebooks
-    └── Quantum_Healio.ipynb
+└── research&dl/           # Research and development materials
+    ├── Quantum_Healio.ipynb    # Quantum model research notebook
+    ├── comparison.ipynb        # Model comparison analysis
+    ├── circuit.png             # Quantum circuit diagram
+    ├── code.cpp                # Hardware implementation code
+    ├── watch.png               # Smartwatch design image
+    └── Screenshot*.png         # Additional research screenshots
 ```
 
 ## 🚀 Installation
