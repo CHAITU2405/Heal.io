@@ -51,3 +51,21 @@ Thumbs.db
 # *.pt
 # *.pth
 
+# Database files
+instance/*.db
+instance/*.db-journal
+
+# Log files
+*.log
+upload_log.txt
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environment files
+.env
+.env.local
+
