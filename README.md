@@ -264,6 +264,12 @@ The application will be available at `http://localhost:5000`
 
 ## 🧠 Quantum Deep Learning Model
 
+> **📁 Research Materials**: For detailed research and implementation details, see the `research&dl/` folder:
+> - **Circuit Diagram**: `circuit.png` - Visual representation of the quantum circuit used for anomaly detection
+> - **Hardware Code**: `code.cpp` - C++ implementation code for the smartwatch hardware
+> - **Watch Design**: `watch.png` - Design image of the affordable precision smartwatch
+> - **Research Notebooks**: `Quantum_Healio.ipynb` and `comparison.ipynb` - Detailed model development and analysis
+
 ### Architecture
 
 The Heal.io model uses a **hybrid quantum-classical deep learning** approach:
