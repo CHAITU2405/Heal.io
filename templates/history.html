@@ -1,0 +1,42 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2>Medical History</h2>
+        <p class="text-muted">A chronological timeline of your health journey.</p>
+    </div>
+</div>
+
+<div class="timeline-container">
+    <div class="timeline-line"></div>
+
+    {% if anomalies %}
+        {% for anomaly in anomalies[:5] %}
+        <div class="timeline-item">
+            <div class="timeline-icon {% if anomaly.severity == 'critical' %}red{% elif anomaly.severity == 'high' %}yellow{% else %}blue{% endif %}">
+                <i class="fa-solid fa-exclamation-triangle"></i>
+            </div>
+            <div class="card timeline-card">
+                <div class="t-date"><i class="fa-regular fa-calendar"></i> {{ anomaly.detected_at.strftime('%B %d, %Y') }}</div>
+                <h3>{{ anomaly.anomaly_type|replace('_', ' ')|title }}</h3>
+                <p class="t-doctor">{{ anomaly.description or 'Anomaly detected' }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="timeline-item">
+        <div class="timeline-icon green">
+            <i class="fa-solid fa-check-circle"></i>
+        </div>
+        <div class="card timeline-card">
+            <div class="t-date"><i class="fa-regular fa-calendar"></i> Current</div>
+            <h3>No Medical History</h3>
+            <p class="t-doctor">Your medical history will appear here as records are added.</p>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% endblock %}

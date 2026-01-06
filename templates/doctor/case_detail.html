@@ -1,0 +1,410 @@
+{% extends "layout.html" %}
+
+{% block page_title %}Case Details{% endblock %}
+{% block page_subtitle %}Review anomaly case and patient vitals.{% endblock %}
+
+{% block content %}
+<div class="panel-bespoke" style="margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1.5rem;">
+        <div>
+            <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">
+                {{ anomaly.anomaly_type|replace('_', ' ')|title }}
+            </h3>
+            <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                Patient: {{ patient.first_name }} {{ patient.last_name }}
+            </p>
+        </div>
+        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+            <span class="badge-bespoke {% if anomaly.severity == 'critical' %}badge-bespoke-danger{% elif anomaly.severity == 'high' %}badge-bespoke-warning{% elif anomaly.severity == 'medium' %}badge-bespoke-info{% else %}badge-bespoke-success{% endif %}">
+                {{ anomaly.severity|upper }}
+            </span>
+            <span class="badge-bespoke badge-bespoke-secondary">{{ anomaly.case_status|upper }}</span>
+        </div>
+    </div>
+    
+    <div style="padding: 1.5rem; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-left: 4px solid {% if anomaly.severity == 'critical' %}var(--danger){% elif anomaly.severity == 'high' %}var(--warning){% elif anomaly.severity == 'medium' %}var(--info){% else %}var(--primary){% endif %}; border-radius: var(--radius-md);">
+        <h4 style="font-size: 0.9rem; font-weight: 700; margin-bottom: 0.75rem; text-transform: uppercase; color: var(--text-secondary);">Description</h4>
+        <p style="color: var(--text-secondary); font-size: 0.9rem; line-height: 1.6;">
+            {{ anomaly.description or 'No description available' }}
+        </p>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1.5rem;">
+            <div>
+                <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.25rem;">Detected At</div>
+                <div class="mono" style="font-size: 0.85rem; font-weight: 600;">
+                    {{ anomaly.detected_at.strftime('%b %d, %Y')|upper }} • {{ anomaly.detected_at.strftime('%H:%M') }} UTC
+                </div>
+            </div>
+            {% if anomaly.risk_score %}
+            <div>
+                <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.25rem;">Risk Score</div>
+                <div class="mono" style="font-size: 0.85rem; font-weight: 600;">
+                    {{ "%.3f"|format(anomaly.risk_score) }}
+                </div>
+            </div>
+            {% endif %}
+            {% if anomaly.assigned_at %}
+            <div>
+                <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 0.25rem;">Assigned At</div>
+                <div class="mono" style="font-size: 0.85rem; font-weight: 600;">
+                    {{ anomaly.assigned_at.strftime('%b %d, %Y')|upper }} • {{ anomaly.assigned_at.strftime('%H:%M') }} UTC
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Current Vital Metrics -->
+{% if latest_vital %}
+<div class="panel-bespoke" style="margin-bottom: 2rem;">
+    <h3 style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 1.5rem;">
+        Current Vital Metrics
+    </h3>
+    <div class="responsive-grid responsive-grid-3">
+        {% if latest_vital.heart_rate %}
+        <div class="panel-bespoke" style="padding: 1.5rem;">
+            <div style="color: var(--text-muted); font-size: 0.65rem; font-weight: 800; text-transform: uppercase;">Heart Rate</div>
+            <div style="display: flex; align-items: baseline; gap: 0.5rem; margin-top: 0.5rem;">
+                <span class="mono" style="font-size: 2rem; font-weight: 800;">
+                    {{ "%.0f"|format(latest_vital.heart_rate) }}
+                </span>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">BPM</span>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if latest_vital.oxygen_saturation %}
+        <div class="panel-bespoke" style="padding: 1.5rem;">
+            <div style="color: var(--text-muted); font-size: 0.65rem; font-weight: 800; text-transform: uppercase;">Oxygen Saturation</div>
+            <div style="display: flex; align-items: baseline; gap: 0.5rem; margin-top: 0.5rem;">
+                <span class="mono" style="font-size: 2rem; font-weight: 800; color: var(--success);">
+                    {{ "%.0f"|format(latest_vital.oxygen_saturation) }}
+                </span>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">SpO2%</span>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if latest_vital.blood_pressure_systolic and latest_vital.blood_pressure_diastolic %}
+        <div class="panel-bespoke" style="padding: 1.5rem;">
+            <div style="color: var(--text-muted); font-size: 0.65rem; font-weight: 800; text-transform: uppercase;">Blood Pressure</div>
+            <div style="display: flex; align-items: baseline; gap: 0.5rem; margin-top: 0.5rem;">
+                <span class="mono" style="font-size: 2rem; font-weight: 800;">
+                    {{ "%.0f"|format(latest_vital.blood_pressure_systolic) }}/{{ "%.0f"|format(latest_vital.blood_pressure_diastolic) }}
+                </span>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">mmHg</span>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if latest_vital.respiratory_rate %}
+        <div class="panel-bespoke" style="padding: 1.5rem;">
+            <div style="color: var(--text-muted); font-size: 0.65rem; font-weight: 800; text-transform: uppercase;">Respiratory Rate</div>
+            <div style="display: flex; align-items: baseline; gap: 0.5rem; margin-top: 0.5rem;">
+                <span class="mono" style="font-size: 2rem; font-weight: 800;">
+                    {{ "%.0f"|format(latest_vital.respiratory_rate) }}
+                </span>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">breaths/min</span>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if latest_vital.body_temperature %}
+        <div class="panel-bespoke" style="padding: 1.5rem;">
+            <div style="color: var(--text-muted); font-size: 0.65rem; font-weight: 800; text-transform: uppercase;">Body Temperature</div>
+            <div style="display: flex; align-items: baseline; gap: 0.5rem; margin-top: 0.5rem;">
+                <span class="mono" style="font-size: 2rem; font-weight: 800;">
+                    {{ "%.1f"|format(latest_vital.body_temperature) }}
+                </span>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">°C</span>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if latest_vital.steps %}
+        <div class="panel-bespoke" style="padding: 1.5rem;">
+            <div style="color: var(--text-muted); font-size: 0.65rem; font-weight: 800; text-transform: uppercase;">Steps</div>
+            <div style="display: flex; align-items: baseline; gap: 0.5rem; margin-top: 0.5rem;">
+                <span class="mono" style="font-size: 2rem; font-weight: 800;">
+                    {{ latest_vital.steps }}
+                </span>
+                <span style="font-size: 0.75rem; color: var(--text-muted);">steps</span>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Vitals Visualization -->
+{% if related_vitals %}
+<div class="panel-bespoke" style="margin-bottom: 2rem;">
+    <h3 style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 1.5rem;">
+        Vitals Timeline (72 hours before anomaly detection)
+    </h3>
+    
+    <div class="chart-container" style="height: 300px; margin-bottom: 2rem;">
+        <canvas id="heartRateChart"></canvas>
+    </div>
+    
+    <div class="chart-container" style="height: 300px; margin-bottom: 2rem;">
+        <canvas id="spo2Chart"></canvas>
+    </div>
+    
+    <div class="chart-container" style="height: 300px; margin-bottom: 2rem;">
+        <canvas id="bpChart"></canvas>
+    </div>
+    
+    <div class="chart-container" style="height: 300px;">
+        <canvas id="respiratoryChart"></canvas>
+    </div>
+</div>
+{% else %}
+<div class="panel-bespoke">
+    <div style="padding: 3rem; text-align: center; color: var(--text-muted);">
+        <span class="material-icons-round" style="font-size: 3rem; opacity: 0.5; margin-bottom: 1rem; display: block;">show_chart</span>
+        <p>No vitals data available for this case period.</p>
+    </div>
+</div>
+{% endif %}
+
+<!-- Action Buttons -->
+<div class="panel-bespoke">
+    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+        <a href="{{ url_for('generate_case_pdf', anomaly_id=anomaly.id) }}" class="btn-bespoke btn-bespoke-primary" style="text-decoration: none;">
+            <span class="material-icons-round" style="font-size: 1rem;">picture_as_pdf</span>
+            Generate PDF
+        </a>
+        {% if anomaly.case_status != 'completed' %}
+        <button onclick="completeCase({{ anomaly.id }})" class="btn-bespoke btn-bespoke-success">
+            <span class="material-icons-round" style="font-size: 1rem;">check_circle</span>
+            Complete Case
+        </button>
+        <a href="{{ url_for('transfer_anomaly_page', anomaly_id=anomaly.id) }}" class="btn-bespoke btn-bespoke-warning" style="text-decoration: none;">
+            <span class="material-icons-round" style="font-size: 1rem;">swap_horiz</span>
+            Transfer Case
+        </a>
+        {% else %}
+        <span class="badge-bespoke badge-bespoke-success">Case Completed</span>
+        {% endif %}
+        <a href="{{ url_for('doctor_cases') }}" class="btn-bespoke btn-bespoke-outline" style="text-decoration: none;">
+            <span class="material-icons-round" style="font-size: 1rem;">arrow_back</span>
+            Back to Cases
+        </a>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const vitalsData = {{ vitals_data|tojson|safe }};
+const dates = {{ vitals_data.dates|tojson|safe }};
+
+// Heart Rate Chart
+{% if vitals_data.heart_rate and vitals_data.heart_rate|length > 0 %}
+const hrCtx = document.getElementById('heartRateChart').getContext('2d');
+const hrGrad = hrCtx.createLinearGradient(0, 0, 0, 400);
+hrGrad.addColorStop(0, 'rgba(239, 68, 68, 0.3)');
+hrGrad.addColorStop(1, 'rgba(239, 68, 68, 0)');
+
+new Chart(hrCtx, {
+    type: 'line',
+    data: {
+        labels: dates.slice(0, {{ vitals_data.heart_rate|length }}),
+        datasets: [{
+            label: 'Heart Rate (BPM)',
+            data: {{ vitals_data.heart_rate|tojson|safe }},
+            borderColor: '#ef4444',
+            backgroundColor: hrGrad,
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: true, labels: { color: '#94a3b8' } }
+        },
+        scales: {
+            x: { 
+                grid: { display: false }, 
+                ticks: { color: '#64748b', font: { family: 'IBM Plex Mono', size: 10 }, maxRotation: 45 }
+            },
+            y: { 
+                grid: { color: 'rgba(255,255,255,0.05)' }, 
+                ticks: { color: '#64748b', font: { family: 'IBM Plex Mono', size: 10 } }
+            }
+        }
+    }
+});
+{% endif %}
+
+// SpO2 Chart
+{% if vitals_data.oxygen_saturation and vitals_data.oxygen_saturation|length > 0 %}
+const spo2Ctx = document.getElementById('spo2Chart').getContext('2d');
+const spo2Grad = spo2Ctx.createLinearGradient(0, 0, 0, 400);
+spo2Grad.addColorStop(0, 'rgba(16, 185, 129, 0.3)');
+spo2Grad.addColorStop(1, 'rgba(16, 185, 129, 0)');
+
+new Chart(spo2Ctx, {
+    type: 'line',
+    data: {
+        labels: dates.slice(0, {{ vitals_data.oxygen_saturation|length }}),
+        datasets: [{
+            label: 'Oxygen Saturation (SpO2%)',
+            data: {{ vitals_data.oxygen_saturation|tojson|safe }},
+            borderColor: '#10b981',
+            backgroundColor: spo2Grad,
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: true, labels: { color: '#94a3b8' } }
+        },
+        scales: {
+            x: { 
+                grid: { display: false }, 
+                ticks: { color: '#64748b', font: { family: 'IBM Plex Mono', size: 10 }, maxRotation: 45 }
+            },
+            y: { 
+                grid: { color: 'rgba(255,255,255,0.05)' }, 
+                ticks: { color: '#64748b', font: { family: 'IBM Plex Mono', size: 10 } }
+            }
+        }
+    }
+});
+{% endif %}
+
+// Blood Pressure Chart
+{% if vitals_data.blood_pressure_systolic and vitals_data.blood_pressure_systolic|length > 0 %}
+const bpCtx = document.getElementById('bpChart').getContext('2d');
+const bpGrad1 = bpCtx.createLinearGradient(0, 0, 0, 400);
+bpGrad1.addColorStop(0, 'rgba(59, 130, 246, 0.3)');
+bpGrad1.addColorStop(1, 'rgba(59, 130, 246, 0)');
+const bpGrad2 = bpCtx.createLinearGradient(0, 0, 0, 400);
+bpGrad2.addColorStop(0, 'rgba(139, 92, 246, 0.3)');
+bpGrad2.addColorStop(1, 'rgba(139, 92, 246, 0)');
+
+new Chart(bpCtx, {
+    type: 'line',
+    data: {
+        labels: dates.slice(0, {{ vitals_data.blood_pressure_systolic|length }}),
+        datasets: [{
+            label: 'Systolic BP',
+            data: {{ vitals_data.blood_pressure_systolic|tojson|safe }},
+            borderColor: '#3b82f6',
+            backgroundColor: bpGrad1,
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 0
+        }, {
+            label: 'Diastolic BP',
+            data: {{ vitals_data.blood_pressure_diastolic|tojson|safe }},
+            borderColor: '#8b5cf6',
+            backgroundColor: bpGrad2,
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: true, labels: { color: '#94a3b8' } }
+        },
+        scales: {
+            x: { 
+                grid: { display: false }, 
+                ticks: { color: '#64748b', font: { family: 'IBM Plex Mono', size: 10 }, maxRotation: 45 }
+            },
+            y: { 
+                grid: { color: 'rgba(255,255,255,0.05)' }, 
+                ticks: { color: '#64748b', font: { family: 'IBM Plex Mono', size: 10 } }
+            }
+        }
+    }
+});
+{% endif %}
+
+// Respiratory Rate Chart
+{% if vitals_data.respiratory_rate and vitals_data.respiratory_rate|length > 0 %}
+const respCtx = document.getElementById('respiratoryChart').getContext('2d');
+const respGrad = respCtx.createLinearGradient(0, 0, 0, 400);
+respGrad.addColorStop(0, 'rgba(245, 158, 11, 0.3)');
+respGrad.addColorStop(1, 'rgba(245, 158, 11, 0)');
+
+new Chart(respCtx, {
+    type: 'line',
+    data: {
+        labels: dates.slice(0, {{ vitals_data.respiratory_rate|length }}),
+        datasets: [{
+            label: 'Respiratory Rate (breaths/min)',
+            data: {{ vitals_data.respiratory_rate|tojson|safe }},
+            borderColor: '#f59e0b',
+            backgroundColor: respGrad,
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            pointRadius: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: true, labels: { color: '#94a3b8' } }
+        },
+        scales: {
+            x: { 
+                grid: { display: false }, 
+                ticks: { color: '#64748b', font: { family: 'IBM Plex Mono', size: 10 }, maxRotation: 45 }
+            },
+            y: { 
+                grid: { color: 'rgba(255,255,255,0.05)' }, 
+                ticks: { color: '#64748b', font: { family: 'IBM Plex Mono', size: 10 } }
+            }
+        }
+    }
+});
+{% endif %}
+
+function completeCase(anomalyId) {
+    if (!confirm('Mark this case as completed? This will increment your patients treated count.')) {
+        return;
+    }
+    
+    fetch(`/doctor/anomaly/${anomalyId}/complete`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert(data.message + '\nTotal patients treated: ' + data.persons_treated);
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+    });
+}
+</script>
+{% endblock %}
+

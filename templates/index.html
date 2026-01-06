@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HealthAI Dashboard</title>
+    
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+
+<div class="app-container">
+    <nav class="sidebar">
+        <div class="logo">
+            <div class="logo-icon"><i class="fa-solid fa-heart-pulse"></i></div>
+            <span class="logo-text">HealthAI</span>
+        </div>
+
+        <div class="menu-label">Main Menu</div>
+        <ul class="nav-links">
+            <li class="active" onclick="showPage('overview', this)">
+                <i class="fa-solid fa-chart-line"></i> Overview
+            </li>
+            <li onclick="showPage('3d-analytics', this)">
+                <i class="fa-solid fa-cube"></i> AI 3D Analytics
+            </li>
+            <li><i class="fa-regular fa-calendar-check"></i> Appointments</li>
+            <li><i class="fa-solid fa-file-medical"></i> Health Reports</li>
+            <li><i class="fa-solid fa-clock-rotate-left"></i> Medical History</li>
+        </ul>
+
+        <div class="sidebar-footer">
+            <ul>
+                <li><i class="fa-solid fa-gear"></i> Settings</li>
+                <li class="logout"><i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out</li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <header class="top-bar">
+            <div class="search-bar">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" placeholder="Search records, medications...">
+            </div>
+            <div class="user-profile">
+                <i class="fa-regular fa-bell notification"></i>
+                <div class="user-info">
+                    <span class="name">Sarah Jenkins</span>
+                    <span class="status">Premium Patient</span>
+                </div>
+                <div class="avatar">
+                    <img src="https://ui-avatars.com/api/?name=Sarah+Jenkins&background=0D9488&color=fff" alt="User">
+                </div>
+            </div>
+        </header>
+
+        <div id="overview" class="page-section active">
+            <h2 class="page-title">Overview</h2>
+            
+            <div class="stats-grid">
+                <div class="card stat-card">
+                    <div class="icon-box red"><i class="fa-solid fa-heart"></i></div>
+                    <div class="stat-info">
+                        <h3>Avg Heart Rate</h3>
+                        <p>72 <span>bpm</span></p>
+                    </div>
+                </div>
+                <div class="card stat-card">
+                    <div class="icon-box yellow"><i class="fa-solid fa-bolt"></i></div>
+                    <div class="stat-info">
+                        <h3>Energy Level</h3>
+                        <p>High</p>
+                    </div>
+                </div>
+                <div class="card stat-card">
+                    <div class="icon-box purple"><i class="fa-solid fa-moon"></i></div>
+                    <div class="stat-info">
+                        <h3>Sleep Avg</h3>
+                        <p>7h 12m</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="charts-grid">
+                <div class="card chart-card large">
+                    <div class="card-header">
+                        <h3>Heart Rate Trend</h3>
+                        <select><option>Today</option></select>
+                    </div>
+                    <canvas id="heartRateChart"></canvas>
+                </div>
+                
+                <div class="card chart-card dark">
+                    <div class="card-header">
+                        <h3>Activity</h3>
+                        <span>Weekly Steps</span>
+                    </div>
+                    <canvas id="activityChart"></canvas>
+                    <div class="total-steps">
+                        <span>Total Steps</span>
+                        <h3>48,300</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="3d-analytics" class="page-section" style="display: none;">
+            <h2 class="page-title">3D Vital Signs Time-Series</h2>
+            <div class="analytics-container">
+                <div class="card viz-container">
+                    <div id="threejs-canvas"></div>
+                    <div class="viz-controls">
+                        <button class="icon-btn"><i class="fa-solid fa-pause"></i></button>
+                        <button class="icon-btn"><i class="fa-solid fa-rotate"></i></button>
+                    </div>
+                </div>
+                
+                <div class="side-panel">
+                    <div class="card dark-panel">
+                        <h3>Model Interpretation</h3>
+                        <p>Visualizing correlation between Heart Rate (red), SpO2 (blue), and Blood Pressure (teal). Notice the dip in SpO2 at T=42.</p>
+                    </div>
+                    
+                    <div class="card alert-panel">
+                        <h3><i class="fa-solid fa-triangle-exclamation"></i> Alerts</h3>
+                        <div class="alert-item error">
+                            <strong>Anomaly Detected</strong>
+                            <p>T=42min: SpO2 Desaturation</p>
+                        </div>
+                        <div class="alert-item warning">
+                            <strong>Warning</strong>
+                            <p>Cardiac Risk Index rising</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script src="{{ url_for('static', filename='js/3d-viz.js') }}"></script>
+
+</body>
+</html>

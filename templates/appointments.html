@@ -1,0 +1,55 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Appointments</h2>
+    <button class="btn-dark">+ Book New</button>
+</div>
+
+<div class="appointments-grid">
+    <div class="schedule-list">
+        <h3>Upcoming Schedule</h3>
+        
+        <div class="card appointment-card active">
+            <div class="date-box">
+                <span>TODAY</span>
+                <strong>12</strong>
+            </div>
+            <div class="details">
+                <h3>Dr. Emily Chen</h3>
+                <span class="tag">CARDIOLOGIST</span>
+                <div class="meta">
+                    <span><i class="fa-regular fa-clock"></i> 14:30 PM (30 min)</span>
+                    <span><i class="fa-solid fa-video"></i> Video Consultation</span>
+                </div>
+                <button class="btn-join">Join Video Call</button>
+            </div>
+            <div class="options"><i class="fa-solid fa-ellipsis-vertical"></i></div>
+        </div>
+
+        <div class="card appointment-card">
+            <div class="date-box">
+                <span>TOMORROW</span>
+                <strong>13</strong>
+            </div>
+            <div class="details">
+                <h3>Dr. Michael Ross</h3>
+                <span class="tag green">NEUROLOGIST</span>
+                <div class="meta">
+                    <span><i class="fa-regular fa-clock"></i> 09:00 AM (45 min)</span>
+                    <span><i class="fa-solid fa-location-dot"></i> In-Person Visit</span>
+                </div>
+                <button class="btn-outline">Get Directions</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="side-widget">
+        <div class="card urgent-care">
+            <h3>Need Urgent Care?</h3>
+            <p>Connect with an emergency specialist instantly. Wait times are under 5 minutes.</p>
+            <button class="btn-emergency"><i class="fa-solid fa-phone"></i> Emergency Call</button>
+        </div>
+    </div>
+</div>
+{% endblock %}

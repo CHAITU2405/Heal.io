@@ -1,0 +1,92 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Settings</h2>
+    <p>Manage your personal information and application preferences.</p>
+</div>
+
+<div class="settings-grid">
+    <div class="card form-card">
+        <div class="user-header">
+            <img src="https://ui-avatars.com/api/?name={{ user.first_name }}+{{ user.last_name }}&background=0D9488&color=fff">
+            <div>
+                <h3>{{ user.first_name }} {{ user.last_name }}</h3>
+                <span class="badge">{{ session.user_type|upper }} MEMBER</span>
+            </div>
+        </div>
+        
+        <form>
+            <div class="form-row">
+                <div class="input-group">
+                    <label>FIRST NAME</label>
+                    <input type="text" value="{{ user.first_name }}">
+                </div>
+                <div class="input-group">
+                    <label>LAST NAME</label>
+                    <input type="text" value="{{ user.last_name }}">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="input-group">
+                    <label>EMAIL</label>
+                    <div class="icon-input">
+                        <i class="fa-regular fa-envelope"></i>
+                        <input type="email" value="{{ user.email }}">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>PHONE</label>
+                    <div class="icon-input">
+                        <i class="fa-solid fa-mobile-screen"></i>
+                        <input type="text" value="{{ user.phone or '' }}">
+                    </div>
+                </div>
+            </div>
+            <div class="form-footer">
+                <button type="button" class="btn-text">Cancel</button>
+                <button type="submit" class="btn-dark">Save Changes</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="notifications-panel">
+        <div class="card">
+            <h3><i class="fa-regular fa-bell"></i> Notifications</h3>
+            
+            <div class="toggle-row">
+                <div>
+                    <strong>Email Reports</strong>
+                    <p>Weekly health summaries</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" checked>
+                    <span class="slider round"></span>
+                </label>
+            </div>
+
+            <div class="toggle-row">
+                <div>
+                    <strong>Push Notifications</strong>
+                    <p>Real-time vital alerts</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" checked>
+                    <span class="slider round"></span>
+                </label>
+            </div>
+            
+            <div class="toggle-row">
+                <div>
+                    <strong>SMS Alerts</strong>
+                    <p>Emergency contacts only</p>
+                </div>
+                <label class="switch">
+                    <input type="checkbox">
+                    <span class="slider round"></span>
+                </label>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

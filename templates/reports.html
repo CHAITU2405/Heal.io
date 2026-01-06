@@ -1,0 +1,55 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2>Health Documents</h2>
+        <p class="text-muted">Securely stored test results and imaging.</p>
+    </div>
+    <button class="btn-white"><i class="fa-solid fa-filter"></i> Filter</button>
+</div>
+
+<div class="card table-card">
+    <table class="doc-table">
+        <thead>
+            <tr>
+                <th>DOCUMENT NAME</th>
+                <th>TYPE</th>
+                <th>DATE</th>
+                <th>STATUS</th>
+                <th>ACTION</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if anomalies %}
+                {% for anomaly in anomalies[:5] %}
+                <tr>
+                    <td>
+                        <div class="doc-info">
+                            <div class="file-icon pdf"><i class="fa-regular fa-file-pdf"></i></div>
+                            <div>
+                                <strong>{{ anomaly.anomaly_type|replace('_', ' ')|title }} Report</strong>
+                                <span>PDF • Anomaly Detection</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td>Anomaly Report</td>
+                    <td>{{ anomaly.detected_at.strftime('%B %d, %Y') }}</td>
+                    <td><span class="status-badge {% if anomaly.severity == 'critical' %}pending{% else %}verified{% endif %}">
+                        {% if anomaly.severity == 'critical' %}Pending{% else %}<i class="fa-solid fa-check"></i> Verified{% endif %}
+                    </span></td>
+                    <td><button class="btn-icon"><i class="fa-solid fa-download"></i></button></td>
+                </tr>
+                {% endfor %}
+            {% else %}
+            <tr>
+                <td colspan="5" style="text-align: center; padding: 40px; color: #6b7280;">
+                    <i class="fa-solid fa-file-medical" style="font-size: 48px; color: #d1fae5; margin-bottom: 15px; display: block;"></i>
+                    <p>No health documents available yet.</p>
+                </td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

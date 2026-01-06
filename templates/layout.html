@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Healio - {% block title %}Dashboard{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Prevent multiple Three.js loads
+        if (typeof THREE === 'undefined') {
+            var script = document.createElement('script');
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+            document.head.appendChild(script);
+        }
+    </script>
+</head>
+<body>
+    <canvas id="bg-canvas-bespoke"></canvas>
+    
+    <button class="mobile-menu-toggle" onclick="toggleSidebar()">
+        <span class="material-icons-round">menu</span>
+    </button>
+    <div class="mobile-menu-overlay" id="menuOverlay" onclick="toggleSidebar()"></div>
+    
+    <div class="app-container">
+        <aside class="sidebar-bespoke" id="sidebar">
+            <div class="brand" style="font-size: 1.5rem; margin-bottom: 3rem; color: #fff;">
+                Healio<span style="color: var(--primary);">.</span>
+            </div>
+
+            <nav style="flex: 1;">
+                <div style="color: var(--text-muted); font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 1rem; padding-left: 1rem;">
+                    Clinical Menu
+                </div>
+                {% if session.user_type == 'patient' %}
+                <a href="{{ url_for('patient_dashboard') }}" class="nav-link-bespoke {{ 'active' if page == 'dashboard' else '' }}">
+                    <span class="material-icons-round">analytics</span> Overview
+                </a>
+                <a href="{{ url_for('patient_vitals') }}" class="nav-link-bespoke {{ 'active' if page == 'vitals' else '' }}">
+                    <span class="material-icons-round">show_chart</span> Vitals Stream
+                </a>
+                <a href="{{ url_for('patient_anomalies') }}" class="nav-link-bespoke {{ 'active' if page == 'anomalies' else '' }}">
+                    <span class="material-icons-round">warning</span> Anomalies
+                </a>
+                <a href="{{ url_for('patient_doctors') }}" class="nav-link-bespoke {{ 'active' if page == 'doctors' else '' }}">
+                    <span class="material-icons-round">account_tree</span> Care Network
+                </a>
+                {% elif session.user_type == 'doctor' %}
+                <a href="{{ url_for('doctor_dashboard') }}" class="nav-link-bespoke {{ 'active' if page == 'dashboard' else '' }}">
+                    <span class="material-icons-round">analytics</span> Dashboard
+                </a>
+                <a href="{{ url_for('doctor_cases') }}" class="nav-link-bespoke {{ 'active' if page == 'cases' else '' }}">
+                    <span class="material-icons-round">medical_services</span> My Cases
+                </a>
+                <a href="{{ url_for('doctor_patients') }}" class="nav-link-bespoke {{ 'active' if page == 'patients' else '' }}">
+                    <span class="material-icons-round">people</span> My Patients
+                </a>
+                {% endif %}
+            </nav>
+
+            <div style="border-top: 1px solid var(--border); padding-top: 1.5rem;">
+                {% if user %}
+                <div style="display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: rgba(255,255,255,0.03); border-radius: var(--radius-md); margin-bottom: 1rem;">
+                    <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.75rem; color: white;">
+                        {{ user.first_name[0] }}{{ user.last_name[0] }}
+                    </div>
+                    <div style="flex: 1; overflow: hidden;">
+                        <div style="font-weight: 600; font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            {% if session.user_type == 'doctor' %}Dr. {% endif %}{{ user.first_name }} {{ user.last_name }}
+                        </div>
+                        <div style="font-size: 0.65rem; color: var(--text-muted);">
+                            {% if session.user_type == 'patient' %}Patient{% else %}Doctor{% endif %} #{{ user.id }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                <a href="{{ url_for('logout') }}" class="nav-link-bespoke" style="color: var(--danger);">
+                    <span class="material-icons-round">logout</span> Terminate Session
+                </a>
+            </div>
+        </aside>
+
+        <main class="main-bespoke">
+            <header style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 3rem;">
+                <div>
+                    <h1 class="text-glint" style="font-size: 2.25rem; margin-bottom: 0.25rem;">{% block page_title %}Command Center{% endblock %}</h1>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">{% block page_subtitle %}Real-time health telemetry and automated diagnostic monitoring.{% endblock %}</p>
+                </div>
+                <div style="text-align: right;">
+                    <div class="mono" style="font-size: 0.9rem; font-weight: 600;" id="current-time"></div>
+                    <div style="color: var(--success); font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 0.25rem;">
+                        Live Telemetry Connected
+                    </div>
+                </div>
+            </header>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+    
+    {% block scripts %}{% endblock %}
+    <script src="{{ url_for('static', filename='js/neural-flow.js') }}"></script>
+    <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('menuOverlay');
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+        
+        // Update time
+        function updateTime() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+            const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }).toUpperCase();
+            const timeEl = document.getElementById('current-time');
+            if (timeEl) {
+                timeEl.textContent = `${dateStr} • ${timeStr} UTC`;
+            }
+        }
+        updateTime();
+        setInterval(updateTime, 1000);
+        
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const toggle = document.querySelector('.mobile-menu-toggle');
+            const overlay = document.getElementById('menuOverlay');
+            
+            if (window.innerWidth <= 768) {
+                if (!sidebar.contains(event.target) && 
+                    !toggle.contains(event.target) && 
+                    sidebar.classList.contains('active')) {
+                    sidebar.classList.remove('active');
+                    overlay.classList.remove('active');
+                }
+            }
+        });
+        
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('menuOverlay');
+            
+            if (window.innerWidth > 768) {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+            }
+        });
+    </script>
+</body>
+</html>

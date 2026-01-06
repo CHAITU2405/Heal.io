@@ -1,0 +1,104 @@
+{% extends "layout.html" %}
+
+{% block page_title %}My Cases{% endblock %}
+{% block page_subtitle %}Anomalies assigned to you for review and treatment.{% endblock %}
+
+{% block content %}
+<div class="panel-bespoke">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h3 style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary);">
+            Assigned Cases
+        </h3>
+        <span class="badge-bespoke badge-bespoke-info">{{ cases|length }} Total</span>
+    </div>
+    
+    {% if cases %}
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        {% for case in cases %}
+        <div style="padding: 1.5rem; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-left: 4px solid {% if case.severity == 'critical' %}var(--danger){% elif case.severity == 'high' %}var(--warning){% elif case.severity == 'medium' %}var(--info){% else %}var(--primary){% endif %}; border-radius: var(--radius-md);">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                <div style="flex: 1;">
+                    <h4 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem;">
+                        {{ case.anomaly_type|replace('_', ' ')|title }}
+                    </h4>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.75rem;">
+                        {{ case.description or 'No description available' }}
+                    </p>
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                        <span class="badge-bespoke {% if case.severity == 'critical' %}badge-bespoke-danger{% elif case.severity == 'high' %}badge-bespoke-warning{% elif case.severity == 'medium' %}badge-bespoke-info{% else %}badge-bespoke-success{% endif %}">
+                            {{ case.severity|upper }}
+                        </span>
+                        <span class="badge-bespoke badge-bespoke-info">{{ case.case_status|upper }}</span>
+                        {% if case.risk_score %}
+                        <span class="badge-bespoke badge-bespoke-secondary">Risk: {{ "%.3f"|format(case.risk_score) }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 1rem; padding: 1rem; background: rgba(59, 130, 246, 0.1); border-radius: var(--radius-sm);">
+                <div style="font-size: 0.75rem; font-weight: 700; color: var(--primary); margin-bottom: 0.5rem;">Patient:</div>
+                <p style="font-size: 0.85rem; color: var(--text-secondary);">
+                    {{ case.patient.first_name }} {{ case.patient.last_name }}
+                    <a href="{{ url_for('doctor_patient_detail', patient_id=case.patient_id) }}" style="color: var(--primary); text-decoration: none; margin-left: 0.5rem;">View Profile →</a>
+                </p>
+            </div>
+            
+            <div style="margin-top: 1rem; display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                <a href="{{ url_for('doctor_view_case', anomaly_id=case.id) }}" class="btn-bespoke btn-bespoke-primary" style="text-decoration: none;">
+                    <span class="material-icons-round" style="font-size: 1rem;">medical_services</span>
+                    Manage
+                </a>
+                {% if case.case_status != 'completed' %}
+                <button onclick="completeCase({{ case.id }})" class="btn-bespoke btn-bespoke-success">
+                    <span class="material-icons-round" style="font-size: 1rem;">check_circle</span>
+                    Complete
+                </button>
+                <a href="{{ url_for('transfer_anomaly_page', anomaly_id=case.id) }}" class="btn-bespoke btn-bespoke-warning" style="text-decoration: none;">
+                    <span class="material-icons-round" style="font-size: 1rem;">swap_horiz</span>
+                    Transfer
+                </a>
+                {% else %}
+                <span class="badge-bespoke badge-bespoke-success">Completed</span>
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div style="padding: 4rem; text-align: center; color: var(--text-muted);">
+        <span class="material-icons-round" style="font-size: 4rem; opacity: 0.5; margin-bottom: 1rem; display: block;">inbox</span>
+        <p>No cases assigned to you yet.</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function completeCase(anomalyId) {
+    if (!confirm('Mark this case as completed? This will increment your patients treated count.')) {
+        return;
+    }
+    
+    fetch(`/doctor/anomaly/${anomalyId}/complete`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert(data.message + '\nTotal patients treated: ' + data.persons_treated);
+            location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+    });
+}
+</script>
+{% endblock %}
+

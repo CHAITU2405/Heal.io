@@ -1,0 +1,202 @@
+{% extends "layout.html" %}
+
+{% block page_title %}Clinical Command{% endblock %}
+{% block page_subtitle %}Patient monitoring and case management dashboard.{% endblock %}
+
+{% block content %}
+{% if pending_requests %}
+<div class="panel-bespoke" style="border-left: 3px solid var(--warning); background: rgba(245, 158, 11, 0.05); margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h3 style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary); display: flex; align-items: center; gap: 0.5rem;">
+            <span class="material-icons-round" style="font-size: 1.2rem; color: var(--warning);">notifications</span> Pending Patient Requests
+        </h3>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 1rem;">
+        {% for rel in pending_requests %}
+        <div style="padding: 1.5rem; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-radius: var(--radius-md);">
+            <div style="display: flex; justify-content: space-between; align-items: start;">
+                <div style="flex: 1;">
+                    <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem;">{{ rel.patient.first_name }} {{ rel.patient.last_name }}</h4>
+                    <div class="mono" style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.5rem;">Patient ID: #{{ rel.patient.id }}</div>
+                    {% if rel.patient.is_non_verbal %}
+                    <span class="badge-bespoke badge-bespoke-warning" style="margin-bottom: 0.5rem; display: inline-block;">Non-Verbal Patient</span>
+                    {% endif %}
+                    <div class="mono" style="font-size: 0.7rem; color: var(--text-muted);">
+                        Requested: {{ rel.requested_at.strftime('%b %d, %Y')|upper }} • {{ rel.requested_at.strftime('%H:%M') }} UTC
+                    </div>
+                </div>
+                <div style="display: flex; gap: 0.75rem;">
+                    <form method="POST" action="{{ url_for('accept_request', request_id=rel.id) }}" style="display: inline;">
+                        <button type="submit" class="btn-bespoke btn-bespoke-primary">
+                            <span class="material-icons-round">check</span> Accept
+                        </button>
+                    </form>
+                    <form method="POST" action="{{ url_for('reject_request', request_id=rel.id) }}" style="display: inline;">
+                        <button type="submit" class="btn-bespoke btn-bespoke-outline" style="color: var(--danger); border-color: var(--danger);">
+                            <span class="material-icons-round">close</span> Reject
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+
+<div class="panel-bespoke">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h3 style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary);">
+            My Patients
+        </h3>
+        <a href="{{ url_for('doctor_patients') }}" style="color: var(--primary); text-decoration: none; font-size: 0.75rem; font-weight: 600;">View All</a>
+    </div>
+    {% if accepted_patients %}
+    <div style="display: flex; flex-direction: column; gap: 1rem;">
+        {% for rel in accepted_patients %}
+        <div style="padding: 1.5rem; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center;">
+            <div style="flex: 1;">
+                <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem;">{{ rel.patient.first_name }} {{ rel.patient.last_name }}</h4>
+                <div class="mono" style="font-size: 0.7rem; color: var(--text-muted); margin-bottom: 0.5rem;">Patient ID: #{{ rel.patient.id }}</div>
+                {% if rel.patient.is_non_verbal %}
+                <span class="badge-bespoke badge-bespoke-warning" style="margin-bottom: 0.5rem; display: inline-block;">Non-Verbal Patient</span>
+                {% endif %}
+                <div class="mono" style="font-size: 0.7rem; color: var(--text-muted);">
+                    Connected: {{ rel.accepted_at.strftime('%b %d, %Y')|upper }}
+                </div>
+            </div>
+            <a href="{{ url_for('doctor_patient_detail', patient_id=rel.patient.id) }}" class="btn-bespoke btn-bespoke-primary">
+                <span class="material-icons-round">show_chart</span> View Vitals
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div style="padding: 3rem; text-align: center; color: var(--text-muted);">
+        <span class="material-icons-round" style="font-size: 3rem; color: var(--text-muted); opacity: 0.5; margin-bottom: 1rem; display: block;">people</span>
+        <p>No patients connected yet. Patient requests will appear here.</p>
+    </div>
+    {% endif %}
+</div>
+
+{% if assigned_cases %}
+<div class="panel-bespoke" style="margin-top: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h3 style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary);">
+            Assigned Cases
+        </h3>
+        <a href="{{ url_for('doctor_cases') }}" style="color: var(--primary); text-decoration: none; font-size: 0.75rem; font-weight: 600;">View All</a>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 1rem;">
+        {% for case in assigned_cases[:3] %}
+        <div style="padding: 1.5rem; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-left: 4px solid {% if case.severity == 'critical' %}var(--danger){% elif case.severity == 'high' %}var(--warning){% elif case.severity == 'medium' %}var(--info){% else %}var(--primary){% endif %}; border-radius: var(--radius-md);">
+            <div style="display: flex; justify-content: space-between; align-items: start;">
+                <div style="flex: 1;">
+                    <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem;">{{ case.anomaly_type|replace('_', ' ')|title }}</h4>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.75rem;">{{ case.patient.first_name }} {{ case.patient.last_name }}</p>
+                    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+                        <span class="badge-bespoke {% if case.severity == 'critical' %}badge-bespoke-danger{% elif case.severity == 'high' %}badge-bespoke-warning{% elif case.severity == 'medium' %}badge-bespoke-info{% else %}badge-bespoke-success{% endif %}">
+                            {{ case.severity|upper }}
+                        </span>
+                        <span class="badge-bespoke badge-bespoke-secondary">{{ case.case_status|upper }}</span>
+                    </div>
+                </div>
+                <a href="{{ url_for('doctor_view_case', anomaly_id=case.id) }}" class="btn-bespoke btn-bespoke-primary">
+                    <span class="material-icons-round">medical_services</span> Manage
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Consistency Map -->
+<div class="panel-bespoke" style="margin-top: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h3 style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary);">
+            Consistency Map (Case Detection)
+        </h3>
+        <span class="badge-bespoke badge-bespoke-info">6 Months</span>
+    </div>
+    <div class="heatmap-container">
+        <div class="heatmap-grid" id="consistencyHeatmap"></div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 1rem; font-size: 0.7rem; color: var(--text-muted); flex-wrap: wrap; margin-top: 1.5rem;">
+        <span style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 12px; height: 12px; border-radius: 2px; background: var(--success);"></span> No Cases
+        </span>
+        <span style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 12px; height: 12px; border-radius: 2px; background: var(--primary);"></span> Low Severity
+        </span>
+        <span style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 12px; height: 12px; border-radius: 2px; background: var(--info);"></span> Medium Severity
+        </span>
+        <span style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 12px; height: 12px; border-radius: 2px; background: var(--warning);"></span> High Severity
+        </span>
+        <span style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 12px; height: 12px; border-radius: 2px; background: var(--danger);"></span> Critical Severity
+        </span>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Generate consistency heatmap for doctor dashboard
+    document.addEventListener('DOMContentLoaded', function() {
+        const consistencyHeatmap = document.getElementById('consistencyHeatmap');
+        const anomalyStatus = {{ daily_anomaly_status|tojson|safe }};
+        
+        if (consistencyHeatmap) {
+            const daysIn6Months = 180;
+            const today = new Date();
+            
+            for(let i = 0; i < daysIn6Months; i++) {
+                const date = new Date(today);
+                date.setDate(date.getDate() - (daysIn6Months - i - 1));
+                const dateKey = date.toISOString().split('T')[0];
+                
+                let div = document.createElement('div');
+                div.style.width = '100%';
+                div.style.aspectRatio = '1';
+                div.style.borderRadius = '2px';
+                div.setAttribute('data-date', dateKey);
+                
+                const status = anomalyStatus[dateKey];
+                if (status && status.has_anomaly) {
+                    const severity = status.severity;
+                    const count = status.count || 1;
+                    
+                    if (severity === 'critical') {
+                        div.style.background = 'rgba(239, 68, 68, 0.3)';
+                        div.style.border = '1px solid var(--danger)';
+                    } else if (severity === 'high') {
+                        div.style.background = 'rgba(245, 158, 11, 0.5)';
+                        div.style.border = '1px solid var(--warning)';
+                    } else if (severity === 'medium') {
+                        div.style.background = 'rgba(14, 165, 233, 0.3)';
+                        div.style.border = '1px solid var(--info)';
+                    } else if (severity === 'low') {
+                        div.style.background = 'rgba(59, 130, 246, 0.3)';
+                        div.style.border = '1px solid var(--primary)';
+                    } else {
+                        div.style.background = 'rgba(245, 158, 11, 0.3)';
+                        div.style.border = '1px solid var(--warning)';
+                    }
+                    div.title = `${count} case(s) detected: ${severity} severity on ${dateKey}`;
+                } else {
+                    div.style.background = 'rgba(16, 185, 129, 0.3)';
+                    div.style.border = '1px solid var(--success)';
+                    div.title = `No cases on ${dateKey}`;
+                }
+                
+                consistencyHeatmap.appendChild(div);
+            }
+        }
+    });
+</script>
+{% endblock %}

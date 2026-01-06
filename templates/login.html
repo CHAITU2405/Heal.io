@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authorize | Healio Bespoke</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body style="background: var(--bg-base); display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem;">
+    <canvas id="bg-canvas-bespoke"></canvas>
+
+    <div class="panel-bespoke animate-fade" style="width: 100%; max-width: 440px; text-align: center; padding: 3rem;">
+        <div class="brand" style="font-size: 2rem; margin-bottom: 2rem; color: #fff;">
+            Healio<span style="color: var(--primary);">.</span>
+        </div>
+
+        <h2 class="text-glint" style="font-size: 1.5rem; margin-bottom: 0.5rem;">Access Portal</h2>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 2.5rem;">Secure clinical cluster authentication protocol</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}" style="margin-bottom: 1.5rem;">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('login') }}">
+            <div style="text-align: left; margin-bottom: 1.5rem;">
+                <label style="color: var(--text-muted); font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 0.5rem;">
+                    Identifier
+                </label>
+                <input type="email" name="email" class="input-bespoke" placeholder="name@clinical.org" required>
+            </div>
+
+            <div style="text-align: left; margin-bottom: 2rem;">
+                <label style="color: var(--text-muted); font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 0.5rem;">
+                    Access Code
+                </label>
+                <input type="password" name="password" class="input-bespoke" placeholder="••••••••" required>
+            </div>
+
+            <button type="submit" class="btn-bespoke btn-bespoke-primary" style="width: 100%; justify-content: center; padding: 1rem;">
+                Authenticate Unit
+            </button>
+        </form>
+
+        <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
+            <p style="color: var(--text-muted); font-size: 0.75rem;">
+                No clinical profile? <a href="{{ url_for('register') }}" style="color: var(--primary); text-decoration: none; font-weight: 700;">Initialization Request</a>
+            </p>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/neural-flow.js') }}"></script>
+</body>
+</html>

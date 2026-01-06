@@ -1,0 +1,105 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Health Snapshot</h2>
+    <div class="live-indicator"><div class="dot"></div> Live Monitoring</div>
+</div>
+
+<div class="card snapshot-card">
+    <div class="profile-section">
+        <img src="https://ui-avatars.com/api/?name={{ user.first_name }}+{{ user.last_name }}&background=0D9488&color=fff" class="lg-avatar">
+        <div>
+            <h3>{{ user.first_name }} {{ user.last_name }}</h3>
+            <p>Patient ID: #{{ user.id }}</p>
+            <div class="health-score">
+                <span>Health Score</span>
+                <strong>{{ health_score }}/100</strong>
+            </div>
+            <button class="btn-dark">Connect a Doctor</button>
+        </div>
+    </div>
+    <div class="vitals-row">
+        {% if latest_vital %}
+        <div class="vital-item">
+            <div class="label"><i class="fa-solid fa-heart"></i> Normal</div>
+            <h3>{{ "%.2f"|format(latest_vital.heart_rate) if latest_vital and latest_vital.heart_rate else '72.00' }} <span>bpm</span></h3>
+            <div class="mini-graph red"></div>
+        </div>
+        <div class="vital-item">
+            <div class="label"><i class="fa-solid fa-droplet"></i> Optimal</div>
+            <h3>{{ "%.2f"|format(latest_vital.oxygen_saturation) if latest_vital and latest_vital.oxygen_saturation else '99.00' }} <span>%</span></h3>
+            <div class="mini-graph blue"></div>
+        </div>
+        <div class="vital-item">
+            <div class="label"><i class="fa-solid fa-lungs"></i> Normal</div>
+            <h3>{{ "%.2f"|format(latest_vital.respiratory_rate) if latest_vital and latest_vital.respiratory_rate else '16.00' }} <span>br/m</span></h3>
+            <div class="mini-graph green"></div>
+        </div>
+        {% else %}
+        <div class="vital-item">
+            <div class="label"><i class="fa-solid fa-heart"></i> Normal</div>
+            <h3>72 <span>bpm</span></h3>
+            <div class="mini-graph red"></div>
+        </div>
+        <div class="vital-item">
+            <div class="label"><i class="fa-solid fa-droplet"></i> Optimal</div>
+            <h3>99 <span>%</span></h3>
+            <div class="mini-graph blue"></div>
+        </div>
+        <div class="vital-item">
+            <div class="label"><i class="fa-solid fa-lungs"></i> Normal</div>
+            <h3>16 <span>br/m</span></h3>
+            <div class="mini-graph green"></div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="ai-banner">
+    <div class="icon"><i class="fa-solid fa-brain"></i></div>
+    <div class="text">
+        <strong>HealthAI Intelligence</strong>
+        <p>Your vital signs are currently within the ideal range, reflecting excellent heart and lung function.</p>
+    </div>
+    <button class="btn-white">Consult AI ↗</button>
+</div>
+
+<div class="dashboard-grid">
+    <div class="card heatmap-card">
+        <div class="card-header">
+            <h3>Health Activity History</h3>
+            <div class="tabs"><span class="active">Month</span><span>Last 30 days</span></div>
+        </div>
+        <div class="heatmap-grid" id="heatmap">
+        </div>
+        <div class="legend"><span>Low Activity</span> <div class="gradient"></div> <span>High Activity</span></div>
+    </div>
+
+    <div class="quick-resources">
+        <div class="resource-card blue">
+            <i class="fa-solid fa-user-doctor"></i>
+            <h3>Find a Doctor</h3>
+        </div>
+        <div class="resource-card dark">
+            <i class="fa-solid fa-phone"></i>
+            <h3>Emergency Contacts</h3>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Simple script to generate heatmap squares
+    const heatmap = document.getElementById('heatmap');
+    for(let i=0; i<84; i++) {
+        let div = document.createElement('div');
+        div.className = 'heat-box';
+        // Randomly assign intensity classes
+        let r = Math.random();
+        if(r > 0.7) div.classList.add('level-3');
+        else if(r > 0.4) div.classList.add('level-2');
+        else div.classList.add('level-1');
+        heatmap.appendChild(div);
+    }
+</script>
+{% endblock %}

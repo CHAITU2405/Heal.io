@@ -1,0 +1,100 @@
+{% extends "layout.html" %}
+
+{% block page_title %}Anomaly Detection Log{% endblock %}
+{% block page_subtitle %}Complete history of detected health anomalies and disease risks.{% endblock %}
+
+{% block content %}
+<div class="panel-bespoke">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h3 style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary);">
+            All Detected Anomalies
+        </h3>
+        <span class="badge-bespoke badge-bespoke-info">{{ anomalies|length }} Total</span>
+    </div>
+    
+    {% if anomalies %}
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+        {% for anomaly in anomalies %}
+        <div style="padding: 1.5rem; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-left: 4px solid {% if anomaly.severity == 'critical' %}var(--danger){% elif anomaly.severity == 'high' %}var(--warning){% elif anomaly.severity == 'medium' %}var(--info){% else %}var(--primary){% endif %}; border-radius: var(--radius-md);">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1rem;">
+                <div style="flex: 1;">
+                    <h4 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-primary);">
+                        {{ anomaly.anomaly_type|replace('_', ' ')|title }}
+                    </h4>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.75rem; line-height: 1.6;">
+                        {{ anomaly.description or 'No description available' }}
+                    </p>
+                </div>
+                <span class="badge-bespoke {% if anomaly.severity == 'critical' %}badge-bespoke-danger{% elif anomaly.severity == 'high' %}badge-bespoke-warning{% elif anomaly.severity == 'medium' %}badge-bespoke-info{% else %}badge-bespoke-success{% endif %}" style="margin-left: 1rem;">
+                    {{ anomaly.severity|upper }}
+                </span>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                <div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Detected At</div>
+                    <div class="mono" style="font-size: 0.85rem; color: var(--text-primary); font-weight: 600;">
+                        {{ anomaly.detected_at.strftime('%b %d, %Y')|upper }} • {{ anomaly.detected_at.strftime('%H:%M') }} UTC
+                    </div>
+                </div>
+                {% if anomaly.risk_score %}
+                <div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Risk Score</div>
+                    <div class="mono" style="font-size: 0.85rem; color: var(--text-primary); font-weight: 600;">
+                        {{ "%.3f"|format(anomaly.risk_score) }}
+                    </div>
+                </div>
+                {% endif %}
+                <div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Status</div>
+                    <div class="mono" style="font-size: 0.85rem; color: var(--text-primary); font-weight: 600;">
+                        {{ anomaly.case_status|upper }}
+                    </div>
+                </div>
+            </div>
+            
+            {% if anomaly.action_taken %}
+            <div style="margin-top: 1rem; padding: 1rem; background: rgba(16, 185, 129, 0.1); border-left: 2px solid var(--success); border-radius: var(--radius-sm);">
+                <div style="font-size: 0.75rem; font-weight: 700; color: var(--success); margin-bottom: 0.5rem; text-transform: uppercase;">Action Taken:</div>
+                <p style="font-size: 0.85rem; color: var(--text-secondary);">{{ anomaly.action_taken }}</p>
+            </div>
+            {% endif %}
+            
+            {% if anomaly.impact_on_body %}
+            <div style="margin-top: 1rem; padding: 1rem; background: rgba(59, 130, 246, 0.1); border-left: 2px solid var(--primary); border-radius: var(--radius-sm);">
+                <div style="font-size: 0.75rem; font-weight: 700; color: var(--primary); margin-bottom: 0.5rem; text-transform: uppercase;">Impact on Body:</div>
+                <p style="font-size: 0.85rem; color: var(--text-secondary);">{{ anomaly.impact_on_body }}</p>
+            </div>
+            {% endif %}
+            
+            {% if anomaly.case_status == 'pending' %}
+            <div style="margin-top: 1rem; display: flex; gap: 0.75rem;">
+                <a href="{{ url_for('consult_doctor', anomaly_id=anomaly.id) }}" class="btn-bespoke btn-bespoke-primary" style="text-decoration: none;">
+                    <span class="material-icons-round" style="font-size: 1rem;">medical_services</span>
+                    Consult Doctor
+                </a>
+            </div>
+            {% elif anomaly.assigned_doctor %}
+            <div style="margin-top: 1rem; padding: 0.75rem; background: rgba(16, 185, 129, 0.1); border-left: 2px solid var(--success); border-radius: var(--radius-sm);">
+                <div style="font-size: 0.75rem; font-weight: 700; color: var(--success); margin-bottom: 0.25rem;">Assigned Doctor:</div>
+                <p style="font-size: 0.85rem; color: var(--text-secondary);">
+                    Dr. {{ anomaly.assigned_doctor.first_name }} {{ anomaly.assigned_doctor.last_name }}
+                    {% if anomaly.assigned_doctor.specialization %}
+                    - {{ anomaly.assigned_doctor.specialization }}
+                    {% endif %}
+                </p>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div style="padding: 4rem; text-align: center; color: var(--text-muted);">
+        <span class="material-icons-round" style="font-size: 4rem; color: var(--success); opacity: 0.5; margin-bottom: 1.5rem; display: block;">check_circle</span>
+        <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--text-primary);">No Anomalies Detected</h3>
+        <p>Your health monitoring shows no anomalies. Continue uploading your vitals data for continuous monitoring.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+

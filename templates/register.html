@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Initialize Profile | Healio Bespoke</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body style="background: var(--bg-base); display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 2rem;">
+    <canvas id="bg-canvas-bespoke"></canvas>
+
+    <div class="panel-bespoke animate-fade" style="width: 100%; max-width: 520px; text-align: center; padding: 3rem;">
+        <div class="brand" style="font-size: 2rem; margin-bottom: 2rem; color: #fff;">
+            Healio<span style="color: var(--primary);">.</span>
+        </div>
+
+        <h2 class="text-glint" style="font-size: 1.5rem; margin-bottom: 0.5rem;">Profile Initialization</h2>
+        <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 2.5rem;">Register a new clinical telemetry node</p>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}" style="margin-bottom: 1.5rem;">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="{{ url_for('register') }}">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div style="text-align: left;">
+                    <label style="color: var(--text-muted); font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 0.5rem;">
+                        First Name
+                    </label>
+                    <input type="text" name="first_name" class="input-bespoke" placeholder="John" required>
+                </div>
+                <div style="text-align: left;">
+                    <label style="color: var(--text-muted); font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 0.5rem;">
+                        Last Name
+                    </label>
+                    <input type="text" name="last_name" class="input-bespoke" placeholder="Doe" required>
+                </div>
+            </div>
+
+            <div style="text-align: left; margin-bottom: 1.5rem;">
+                <label style="color: var(--text-muted); font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 0.5rem;">
+                    Organization Email
+                </label>
+                <input type="email" name="email" class="input-bespoke" placeholder="name@clinical.org" required>
+            </div>
+
+            <div style="text-align: left; margin-bottom: 1.5rem;">
+                <label style="color: var(--text-muted); font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 0.5rem;">
+                    Phone Number
+                </label>
+                <input type="tel" name="phone" class="input-bespoke" placeholder="+1 (555) 000-0000">
+            </div>
+
+            <div style="text-align: left; margin-bottom: 1.5rem;">
+                <label style="color: var(--text-muted); font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 0.5rem;">
+                    Date of Birth
+                </label>
+                <input type="date" name="date_of_birth" class="input-bespoke">
+            </div>
+
+            <div style="text-align: left; margin-bottom: 1.5rem;">
+                <label style="color: var(--text-muted); font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 0.5rem;">
+                    Node Role
+                </label>
+                <select name="user_type" class="input-bespoke" style="appearance: none; cursor: pointer;" required onchange="toggleRoleFields(this.value)">
+                    <option value="">Select Role</option>
+                    <option value="patient">Patient Unit</option>
+                    <option value="doctor">Medical Practitioner</option>
+                </select>
+            </div>
+
+            <div style="text-align: left; margin-bottom: 1.5rem;">
+                <label style="color: var(--text-muted); font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 0.5rem;">
+                    Access Code
+                </label>
+                <input type="password" name="password" class="input-bespoke" placeholder="••••••••" required>
+                <p style="font-size: 0.65rem; color: var(--text-muted); margin-top: 0.5rem;">Minimum 8 characters required for secure sync</p>
+            </div>
+
+            <div style="text-align: left; margin-bottom: 1.5rem;">
+                <label style="color: var(--text-muted); font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 0.5rem;">
+                    Confirm Access Code
+                </label>
+                <input type="password" name="confirm_password" class="input-bespoke" placeholder="••••••••" required>
+            </div>
+
+            <!-- Doctor-specific fields -->
+            <div id="doctor-fields" style="display: none; text-align: left; margin-bottom: 1.5rem;">
+                <label style="color: var(--text-muted); font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 0.5rem;">
+                    Medical License Number
+                </label>
+                <input type="text" name="license_number" class="input-bespoke" placeholder="LIC-XXXXX">
+            </div>
+
+            <div id="doctor-fields-2" style="display: none; text-align: left; margin-bottom: 1.5rem;">
+                <label style="color: var(--text-muted); font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 0.5rem;">
+                    Specialization
+                </label>
+                <input type="text" name="specialization" class="input-bespoke" placeholder="e.g., Cardiology, Neurology">
+            </div>
+
+            <!-- Patient-specific fields -->
+            <div id="patient-fields" style="display: none; text-align: left; margin-bottom: 1.5rem;">
+                <label style="display: flex; align-items: center; gap: 0.5rem; color: var(--text-muted); font-size: 0.75rem; cursor: pointer;">
+                    <input type="checkbox" name="is_non_verbal" style="width: auto; cursor: pointer;">
+                    Non-verbal patient / Critical care patient
+                </label>
+            </div>
+
+            <div id="patient-fields-2" style="display: none; text-align: left; margin-bottom: 1.5rem;">
+                <label style="color: var(--text-muted); font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 0.5rem;">
+                    Emergency Contact Name
+                </label>
+                <input type="text" name="emergency_contact_name" class="input-bespoke" placeholder="Emergency Contact">
+            </div>
+
+            <div id="patient-fields-3" style="display: none; text-align: left; margin-bottom: 1.5rem;">
+                <label style="color: var(--text-muted); font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; display: block; margin-bottom: 0.5rem;">
+                    Emergency Contact Phone
+                </label>
+                <input type="tel" name="emergency_contact_phone" class="input-bespoke" placeholder="+1 (555) 000-0000">
+            </div>
+
+            <button type="submit" class="btn-bespoke btn-bespoke-primary" style="width: 100%; justify-content: center; padding: 1rem;">
+                Provision Record
+            </button>
+        </form>
+
+        <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border);">
+            <p style="color: var(--text-muted); font-size: 0.75rem;">
+                Active profile? <a href="{{ url_for('login') }}" style="color: var(--primary); text-decoration: none; font-weight: 700;">Secure Sign In</a>
+            </p>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/neural-flow.js') }}"></script>
+    <script>
+        function toggleRoleFields(role) {
+            const doctorFields = document.getElementById('doctor-fields');
+            const doctorFields2 = document.getElementById('doctor-fields-2');
+            const patientFields = document.getElementById('patient-fields');
+            const patientFields2 = document.getElementById('patient-fields-2');
+            const patientFields3 = document.getElementById('patient-fields-3');
+            
+            if (role === 'doctor') {
+                doctorFields.style.display = 'block';
+                doctorFields2.style.display = 'block';
+                patientFields.style.display = 'none';
+                patientFields2.style.display = 'none';
+                patientFields3.style.display = 'none';
+            } else if (role === 'patient') {
+                doctorFields.style.display = 'none';
+                doctorFields2.style.display = 'none';
+                patientFields.style.display = 'block';
+                patientFields2.style.display = 'block';
+                patientFields3.style.display = 'block';
+            } else {
+                doctorFields.style.display = 'none';
+                doctorFields2.style.display = 'none';
+                patientFields.style.display = 'none';
+                patientFields2.style.display = 'none';
+                patientFields3.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

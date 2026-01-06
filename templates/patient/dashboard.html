@@ -1,0 +1,450 @@
+{% extends "layout.html" %}
+
+{% block page_title %}Command Center{% endblock %}
+{% block page_subtitle %}Real-time health telemetry and automated diagnostic monitoring.{% endblock %}
+
+{% block content %}
+<div class="responsive-grid responsive-grid-2-1">
+    <div>
+        <!-- Primary Waveform Container -->
+        <div class="panel-bespoke highlight">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <h3 style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary);">
+                    Pulse Stream / 24H Analytics
+                </h3>
+                <div style="display: flex; gap: 0.5rem;">
+                    {% if latest_vital %}
+                    <span class="badge-bespoke badge-bespoke-success">Stable</span>
+                    {% else %}
+                    <span class="badge-bespoke badge-bespoke-warning">No Data</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="chart-container" style="height: 300px; max-width: 100%; overflow: hidden; position: relative;">
+                <canvas id="bespokeChart"></canvas>
+            </div>
+        </div>
+
+        <!-- High-Density Clinical Grid -->
+        <div class="responsive-grid responsive-grid-3">
+            {% if latest_vital %}
+            <div class="panel-bespoke" style="padding: 1.5rem;">
+                <div style="color: var(--text-muted); font-size: 0.65rem; font-weight: 800; text-transform: uppercase;">
+                    Heart Rate
+                </div>
+                <div style="display: flex; align-items: baseline; gap: 0.5rem; margin-top: 0.5rem;">
+                    <span class="mono" style="font-size: 2rem; font-weight: 800;">
+                        {{ "%.0f"|format(latest_vital.heart_rate) if latest_vital.heart_rate else 'N/A' }}
+                    </span>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">BPM</span>
+                </div>
+                <div style="margin-top: 1rem; height: 30px;"><canvas id="miniHr"></canvas></div>
+            </div>
+            <div class="panel-bespoke" style="padding: 1.5rem;">
+                <div style="color: var(--text-muted); font-size: 0.65rem; font-weight: 800; text-transform: uppercase;">
+                    Saturation (SpO2)
+                </div>
+                <div style="display: flex; align-items: baseline; gap: 0.5rem; margin-top: 0.5rem;">
+                    <span class="mono" style="font-size: 2rem; font-weight: 800; color: var(--success);">
+                        {{ "%.0f"|format(latest_vital.oxygen_saturation) if latest_vital.oxygen_saturation else 'N/A' }}
+                    </span>
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">%</span>
+                </div>
+                <div style="margin-top: 1rem; height: 30px;"><canvas id="miniSpo2"></canvas></div>
+            </div>
+            <div class="panel-bespoke" style="padding: 1.5rem;">
+                <div style="color: var(--text-muted); font-size: 0.65rem; font-weight: 800; text-transform: uppercase;">
+                    Blood Pressure
+                </div>
+                <div style="display: flex; align-items: baseline; gap: 0.5rem; margin-top: 0.5rem;">
+                    <span class="mono" style="font-size: 1.5rem; font-weight: 700;">
+                        {{ "%.0f"|format(latest_vital.blood_pressure_systolic) if latest_vital.blood_pressure_systolic else 'N/A' }}/{{ "%.0f"|format(latest_vital.blood_pressure_diastolic) if latest_vital.blood_pressure_diastolic else 'N/A' }}
+                    </span>
+                </div>
+                <div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 1.25rem;">
+                    LAST MEASURED: {{ latest_vital.recorded_at.strftime('%b %d')|upper }} UTC
+                </div>
+            </div>
+            {% else %}
+            <div class="panel-bespoke" style="padding: 1.5rem; grid-column: span 3; text-align: center;">
+                <p style="color: var(--text-muted);">No vitals data available yet</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div>
+        <!-- CSV Upload Section -->
+        <div class="panel-bespoke" style="margin-bottom: 1.5rem;">
+            <h3 style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 1rem;">
+                <span class="material-icons-round" style="font-size: 1rem; vertical-align: middle; margin-right: 0.5rem;">upload_file</span>
+                Upload Vitals CSV
+            </h3>
+            <form id="csvUploadForm" enctype="multipart/form-data" style="display: flex; flex-direction: column; gap: 1rem;">
+                <label for="csvFile" style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; color: var(--text-muted);">
+                    Select CSV file (3 days = 72 rows)
+                </label>
+                <input type="file" id="csvFile" name="csv_file" accept=".csv" required 
+                       style="width: 100%; padding: 0.75rem; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: var(--radius-md); color: var(--text-primary); font-size: 0.85rem; cursor: pointer;">
+                <button type="submit" class="btn-bespoke btn-bespoke-primary" style="width: 100%;">
+                    <span class="material-icons-round" style="font-size: 1rem; vertical-align: middle; margin-right: 0.5rem;">cloud_upload</span>
+                    Upload & Process
+                </button>
+            </form>
+            <div id="uploadStatus" style="margin-top: 1rem; font-size: 0.75rem; color: var(--text-muted); display: none;"></div>
+            <div style="margin-top: 1rem; padding: 0.75rem; background: rgba(59, 130, 246, 0.1); border-radius: var(--radius-sm); font-size: 0.7rem; color: var(--text-secondary);">
+                <strong>CSV Format:</strong> heart_rate, sbp (or blood_pressure_systolic), dbp (or blood_pressure_diastolic), spo2 (or oxygen_saturation), respiratory_rate, body_temperature, steps, sleep_hours, energy_level
+            </div>
+        </div>
+
+        <!-- Health Score Ring (Circular Widget) -->
+        <div class="panel-bespoke" style="text-align: center;">
+            <h3 style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 2rem;">
+                Consolidated Health Index
+            </h3>
+            <div style="position: relative; width: 180px; height: 180px; margin: 0 auto;">
+                <svg viewBox="0 0 36 36" style="width: 100%; height: 100%; transform: rotate(-90deg);">
+                    <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                        fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="2.5" />
+                    <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                        fill="none" stroke="var(--primary)" stroke-width="2.5" 
+                        stroke-dasharray="{{ health_score }}, 100"
+                        stroke-linecap="round" style="filter: drop-shadow(0 0 4px var(--primary));" />
+                </svg>
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                    <div class="mono" style="font-size: 2.5rem; font-weight: 800;">{{ health_score }}</div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted); font-weight: 700;">INDEX</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Clinical Notifications (Layered List) -->
+        <div class="panel-bespoke" style="padding: 1.5rem;">
+            <h3 style="font-size: 0.75rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 1.5rem;">
+                Operational Logs
+            </h3>
+            <div style="display: flex; flex-direction: column; gap: 1rem;">
+                {% if unassigned_anomalies %}
+                <div style="padding-left: 1rem; border-left: 2px solid var(--danger);">
+                    <div style="font-size: 0.8rem; font-weight: 700;">Anomaly Verification Required</div>
+                    <div class="mono" style="font-size: 0.65rem; color: var(--text-muted);">
+                        {{ unassigned_anomalies|length }} PENDING
+                    </div>
+                </div>
+                {% endif %}
+                {% if recent_anomalies %}
+                {% for anomaly in recent_anomalies %}
+                <div style="padding-left: 1rem; border-left: 2px solid {% if anomaly.severity == 'critical' or anomaly.severity == 'high' %}var(--danger){% elif anomaly.severity == 'medium' %}var(--warning){% else %}var(--primary){% endif %};">
+                    <div style="font-size: 0.8rem; font-weight: 700;">{{ anomaly.anomaly_type|replace('_', ' ')|title }}</div>
+                    <div class="mono" style="font-size: 0.65rem; color: var(--text-muted);">
+                        {{ anomaly.detected_at.strftime('%b %d')|upper }} • {{ anomaly.detected_at.strftime('%H:%M') }} UTC
+                    </div>
+                </div>
+                {% endfor %}
+                {% else %}
+                <div style="padding-left: 1rem; border-left: 2px solid var(--success);">
+                    <div style="font-size: 0.8rem; font-weight: 700;">Synchronization Confirmed</div>
+                    <div class="mono" style="font-size: 0.65rem; color: var(--text-muted);">All Systems Nominal</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if unread_alerts %}
+<div class="panel-bespoke" style="border-left: 3px solid var(--warning); background: rgba(245, 158, 11, 0.05); margin-bottom: 2rem;">
+    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+        <span class="material-icons-round" style="color: var(--warning); font-size: 2rem;">notifications</span>
+        <div style="flex: 1;">
+            <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.25rem;">Active Alerts</h3>
+            <p style="color: var(--text-secondary); font-size: 0.85rem;">You have {{ unread_alerts|length }} unread alert(s).</p>
+        </div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+        {% for alert in unread_alerts[:3] %}
+        <div style="padding: 0.75rem; background: rgba(255, 255, 255, 0.02); border-radius: var(--radius-sm);">
+            <div style="display: flex; justify-content: space-between; align-items: start;">
+                <div style="flex: 1;">
+                    <div style="font-size: 0.85rem; font-weight: 600; margin-bottom: 0.25rem;">{{ alert.alert_type|replace('_', ' ')|title }}</div>
+                    <div style="font-size: 0.75rem; color: var(--text-secondary);">{{ alert.message }}</div>
+                </div>
+                <span class="badge-bespoke {% if alert.severity == 'critical' %}badge-bespoke-danger{% elif alert.severity == 'high' %}badge-bespoke-warning{% else %}badge-bespoke-info{% endif %}" style="margin-left: 0.75rem;">
+                    {{ alert.severity|upper }}
+                </span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% if unassigned_anomalies %}
+<div class="panel-bespoke" style="border-left: 3px solid var(--danger); background: rgba(239, 68, 68, 0.05); margin-bottom: 2rem;">
+    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+        <span class="material-icons-round" style="color: var(--danger); font-size: 2rem;">crisis_alert</span>
+        <div style="flex: 1;">
+            <h3 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.25rem;">Anomaly Detected - Verification Required</h3>
+            <p style="color: var(--text-secondary); font-size: 0.85rem;">You have {{ unassigned_anomalies|length }} unverified anomaly/anomalies detected from disease analysis.</p>
+        </div>
+    </div>
+    <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+        <a href="{{ url_for('patient_anomalies') }}" class="btn-bespoke btn-bespoke-primary">
+            <span class="material-icons-round">warning</span> View All Anomalies
+        </a>
+    </div>
+</div>
+{% endif %}
+
+<!-- Recent Anomaly Predictions -->
+<div class="panel-bespoke">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h3 style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary);">
+            Recent Anomaly Predictions
+        </h3>
+        <a href="{{ url_for('patient_anomalies') }}" style="color: var(--primary); text-decoration: none; font-size: 0.75rem; font-weight: 600;">View All</a>
+    </div>
+    {% if recent_anomalies %}
+    <div style="display: flex; flex-direction: column; gap: 1rem;">
+        {% for anomaly in recent_anomalies %}
+        <div style="padding: 1rem; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-radius: var(--radius-md);">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem;">
+                <strong style="font-size: 0.9rem; font-weight: 700;">{{ anomaly.anomaly_type|replace('_', ' ')|title }}</strong>
+                <span class="badge-bespoke {% if anomaly.severity == 'critical' %}badge-bespoke-danger{% elif anomaly.severity == 'high' %}badge-bespoke-warning{% else %}badge-bespoke-info{% endif %}">
+                    {{ anomaly.severity|upper }}
+                </span>
+            </div>
+            <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 0.5rem;">{{ anomaly.description or 'No description available' }}</p>
+            <div class="mono" style="font-size: 0.7rem; color: var(--text-muted);">
+                {{ anomaly.detected_at.strftime('%b %d, %Y')|upper }} • {{ anomaly.detected_at.strftime('%H:%M') }} UTC
+            </div>
+            {% if anomaly.risk_score %}
+            <div style="margin-top: 0.5rem; font-size: 0.8rem;">
+                <strong style="color: var(--text-secondary);">Risk Score:</strong> 
+                <span class="mono" style="font-weight: 700;">{{ "%.2f"|format(anomaly.risk_score) }}</span>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div style="padding: 3rem; text-align: center; color: var(--text-muted);">
+        <span class="material-icons-round" style="font-size: 3rem; color: var(--success); opacity: 0.5; margin-bottom: 1rem; display: block;">check_circle</span>
+        <p>No anomalies detected. Your health is stable!</p>
+    </div>
+    {% endif %}
+</div>
+
+
+<!-- Consistency Map -->
+<div class="panel-bespoke">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h3 style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary);">
+            Consistency Map (Anomaly Detection)
+        </h3>
+        <span class="badge-bespoke badge-bespoke-info">6 Months</span>
+    </div>
+    <div class="heatmap-container">
+        <div class="heatmap-grid" id="consistencyHeatmap"></div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 1rem; font-size: 0.7rem; color: var(--text-muted); flex-wrap: wrap;">
+        <span style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 12px; height: 12px; border-radius: 2px; background: rgba(16, 185, 129, 0.3); border: 1px solid var(--success);"></span> No Anomaly
+        </span>
+        <span style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 12px; height: 12px; border-radius: 2px; background: rgba(245, 158, 11, 0.3); border: 1px solid var(--warning);"></span> Low Risk
+        </span>
+        <span style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 12px; height: 12px; border-radius: 2px; background: rgba(245, 158, 11, 0.5); border: 1px solid var(--warning);"></span> Medium Risk
+        </span>
+        <span style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="width: 12px; height: 12px; border-radius: 2px; background: rgba(239, 68, 68, 0.3); border: 1px solid var(--danger);"></span> High/Critical Risk
+        </span>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Main Chart
+    {% if latest_vital %}
+    const ctx = document.getElementById('bespokeChart').getContext('2d');
+    const grad = ctx.createLinearGradient(0, 0, 0, 400);
+    grad.addColorStop(0, 'rgba(59, 130, 246, 0.3)');
+    grad.addColorStop(1, 'rgba(59, 130, 246, 0)');
+
+    // Use actual vitals data from CSV or generate placeholder
+    const vitalsData = {{ vitals_chart_data|tojson|safe }};
+    let labels = [];
+    let heartRateData = [];
+    
+    if (vitalsData && vitalsData.length > 0) {
+        // Use actual data from CSV
+        labels = vitalsData.map(v => v.timestamp || '');
+        heartRateData = vitalsData.map(v => v.heart_rate || {{ latest_vital.heart_rate or 72 }});
+    } else {
+        // Fallback: Generate 24 hours of placeholder data
+        labels = Array.from({ length: 24 }, (_, i) => `${i}:00`);
+        heartRateData = Array.from({ length: 24 }, () => {{ latest_vital.heart_rate or 72 }});
+    }
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: heartRateData,
+                borderColor: '#3b82f6',
+                borderWidth: 2,
+                fill: true,
+                backgroundColor: grad,
+                tension: 0.4,
+                pointRadius: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { 
+                    grid: { display: false }, 
+                    ticks: { color: '#64748b', font: { family: 'IBM Plex Mono', size: 10 } } 
+                },
+                y: { 
+                    grid: { color: 'rgba(255,255,255,0.05)' }, 
+                    ticks: { color: '#64748b', font: { family: 'IBM Plex Mono', size: 10 } } 
+                }
+            }
+        }
+    });
+
+    // Mini Charts - use actual data if available
+    const miniCfg = (color, dataKey) => {
+        let chartData = [];
+        if (vitalsData && vitalsData.length > 0) {
+            // Use last 6 data points from actual CSV data
+            const last6 = vitalsData.slice(-6);
+            chartData = last6.map(v => v[dataKey] || 0);
+        } else {
+            // Fallback: use constant value from latest vital
+            const fallbackValue = dataKey === 'heart_rate' ? {{ latest_vital.heart_rate if latest_vital and latest_vital.heart_rate else 72 }} : 
+                                  dataKey === 'oxygen_saturation' ? {{ latest_vital.oxygen_saturation if latest_vital and latest_vital.oxygen_saturation else 98 }} : 0;
+            chartData = Array.from({ length: 6 }, () => fallbackValue);
+        }
+        
+        return {
+            type: 'line',
+            data: { 
+                labels: [1, 2, 3, 4, 5, 6], 
+                datasets: [{ 
+                    data: chartData, 
+                    borderColor: color, 
+                    tension: 0.4, 
+                    pointRadius: 0 
+                }] 
+            },
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { legend: { display: false } }, 
+                scales: { x: { display: false }, y: { display: false } } 
+            }
+        };
+    };
+    new Chart(document.getElementById('miniHr'), miniCfg('#3b82f6', 'heart_rate'));
+    new Chart(document.getElementById('miniSpo2'), miniCfg('#10b981', 'oxygen_saturation'));
+    {% endif %}
+
+    // CSV Upload Handler
+    document.getElementById('csvUploadForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const formData = new FormData();
+        const fileInput = document.getElementById('csvFile');
+        const statusDiv = document.getElementById('uploadStatus');
+        
+        if (!fileInput.files[0]) {
+            statusDiv.textContent = 'Please select a CSV file';
+            statusDiv.style.color = 'var(--danger)';
+            statusDiv.style.display = 'block';
+            return;
+        }
+        
+        formData.append('csv_file', fileInput.files[0]);
+        
+        statusDiv.textContent = 'Uploading and processing...';
+        statusDiv.style.color = 'var(--info)';
+        statusDiv.style.display = 'block';
+        
+        try {
+            const response = await fetch('{{ url_for("upload_vitals_csv") }}', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (result.status === 'success') {
+                statusDiv.textContent = `Success! ${result.count} vitals records uploaded. ${result.anomalies_created > 0 ? result.anomalies_created + ' anomaly/anomalies detected.' : 'No anomalies detected.'}`;
+                statusDiv.style.color = 'var(--success)';
+                fileInput.value = '';
+                
+                // Reload page after 2 seconds to show new data
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            } else {
+                statusDiv.textContent = 'Error: ' + (result.message || 'Upload failed');
+                statusDiv.style.color = 'var(--danger)';
+            }
+        } catch (error) {
+            statusDiv.textContent = 'Error: ' + error.message;
+            statusDiv.style.color = 'var(--danger)';
+        }
+    });
+
+    // Generate consistency heatmap
+    const consistencyHeatmap = document.getElementById('consistencyHeatmap');
+    const anomalyStatus = {{ daily_anomaly_status|tojson|safe }};
+    
+    if (consistencyHeatmap) {
+        const daysIn6Months = 180;
+        const today = new Date();
+        
+        for(let i = 0; i < daysIn6Months; i++) {
+            const date = new Date(today);
+            date.setDate(date.getDate() - (daysIn6Months - i - 1));
+            const dateKey = date.toISOString().split('T')[0];
+            
+            let div = document.createElement('div');
+            div.style.width = '100%';
+            div.style.aspectRatio = '1';
+            div.style.borderRadius = '2px';
+            div.setAttribute('data-date', dateKey);
+            
+            const status = anomalyStatus[dateKey];
+            if (status && status.has_anomaly) {
+                if (status.severity === 'critical' || status.severity === 'high') {
+                    div.style.background = 'rgba(239, 68, 68, 0.3)';
+                    div.style.border = '1px solid var(--danger)';
+                } else if (status.severity === 'medium') {
+                    div.style.background = 'rgba(245, 158, 11, 0.5)';
+                    div.style.border = '1px solid var(--warning)';
+                } else {
+                    div.style.background = 'rgba(245, 158, 11, 0.3)';
+                    div.style.border = '1px solid var(--warning)';
+                }
+                div.title = `Anomaly detected: ${status.severity} risk on ${dateKey}`;
+            } else {
+                div.style.background = 'rgba(16, 185, 129, 0.3)';
+                div.style.border = '1px solid var(--success)';
+                div.title = `No anomalies on ${dateKey}`;
+            }
+            
+            consistencyHeatmap.appendChild(div);
+        }
+    }
+</script>
+{% endblock %}

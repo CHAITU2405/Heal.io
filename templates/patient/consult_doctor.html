@@ -1,0 +1,95 @@
+{% extends "layout.html" %}
+
+{% block page_title %}Consult Doctor{% endblock %}
+{% block page_subtitle %}Select a doctor to consult about this anomaly.{% endblock %}
+
+{% block content %}
+<div class="panel-bespoke" style="margin-bottom: 2rem;">
+    <h3 style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 1.5rem;">
+        Anomaly Details
+    </h3>
+    <div style="padding: 1.5rem; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-left: 4px solid {% if anomaly.severity == 'critical' %}var(--danger){% elif anomaly.severity == 'high' %}var(--warning){% elif anomaly.severity == 'medium' %}var(--info){% else %}var(--primary){% endif %}; border-radius: var(--radius-md);">
+        <h4 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem;">{{ anomaly.anomaly_type|replace('_', ' ')|title }}</h4>
+        <p style="color: var(--text-secondary); font-size: 0.9rem;">{{ anomaly.description or 'No description available' }}</p>
+        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+            <span class="badge-bespoke {% if anomaly.severity == 'critical' %}badge-bespoke-danger{% elif anomaly.severity == 'high' %}badge-bespoke-warning{% elif anomaly.severity == 'medium' %}badge-bespoke-info{% else %}badge-bespoke-success{% endif %}">
+                {{ anomaly.severity|upper }}
+            </span>
+            <span class="badge-bespoke badge-bespoke-info">{{ anomaly.case_status|upper }}</span>
+        </div>
+    </div>
+</div>
+
+<div class="panel-bespoke">
+    <h3 style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 1.5rem;">
+        Available Doctors
+    </h3>
+    
+    {% if doctors %}
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem;">
+        {% for doctor in doctors %}
+        <div style="padding: 1.5rem; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-radius: var(--radius-md);">
+            <div style="display: flex; align-items: start; gap: 1rem; margin-bottom: 1rem;">
+                <div style="width: 50px; height: 50px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 1.25rem;">
+                    {{ doctor.first_name[0] }}{{ doctor.last_name[0] }}
+                </div>
+                <div style="flex: 1;">
+                    <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.25rem;">
+                        Dr. {{ doctor.first_name }} {{ doctor.last_name }}
+                    </h4>
+                    {% if doctor.specialization %}
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                        {{ doctor.specialization }}
+                    </p>
+                    {% endif %}
+                    {% if doctor.persons_treated %}
+                    <p style="font-size: 0.75rem; color: var(--text-muted);">
+                        {{ doctor.persons_treated }} patients treated
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+            <button onclick="assignDoctor({{ doctor.id }})" class="btn-bespoke btn-bespoke-primary" style="width: 100%;">
+                <span class="material-icons-round" style="font-size: 1rem;">person_add</span>
+                Assign Doctor
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div style="padding: 4rem; text-align: center; color: var(--text-muted);">
+        <span class="material-icons-round" style="font-size: 4rem; opacity: 0.5; margin-bottom: 1rem; display: block;">medical_services</span>
+        <p>No doctors available at the moment.</p>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function assignDoctor(doctorId) {
+    if (!confirm('Assign this anomaly to the selected doctor?')) {
+        return;
+    }
+    
+    fetch(`/patient/anomaly/{{ anomaly.id }}/assign-doctor/${doctorId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            alert(data.message);
+            window.location.href = '{{ url_for("patient_anomalies") }}';
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred. Please try again.');
+    });
+}
+</script>
+{% endblock %}
+

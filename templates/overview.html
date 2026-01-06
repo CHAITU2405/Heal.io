@@ -1,0 +1,62 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="overview-grid">
+    <div class="card stat-card">
+        <div class="icon-box red"><i class="fa-solid fa-heart-pulse"></i></div>
+        <div><small>AVG HEART RATE</small><h2>{{ latest_vital.heart_rate or 'N/A' }} bpm</h2></div>
+    </div>
+    <div class="card stat-card">
+        <div class="icon-box yellow"><i class="fa-solid fa-bolt"></i></div>
+        <div><small>ENERGY LEVEL</small><h2>{{ latest_vital.energy_level or 'Normal' }}</h2></div>
+    </div>
+    <div class="card stat-card">
+        <div class="icon-box purple"><i class="fa-solid fa-moon"></i></div>
+        <div><small>SLEEP AVG</small><h2>{{ latest_vital.sleep_hours or 'N/A' }}h</h2></div>
+    </div>
+    <div class="card stat-card">
+        <div class="icon-box green"><i class="fa-solid fa-walking"></i></div>
+        <div><small>STEPS</small><h2>{{ latest_vital.steps or '0' }}</h2></div>
+    </div>
+
+    <div class="card chart-section large">
+        <div class="card-header">
+            <h3>Heart Rate Trend</h3>
+            <select><option>Today</option><option>Week</option><option>Month</option></select>
+        </div>
+        <canvas id="hrChart" height="100"></canvas>
+    </div>
+
+    <div class="card dark-card activity">
+        <div class="card-header">
+            <h3>Activity</h3>
+            <small>Weekly Steps</small>
+        </div>
+        <canvas id="stepsChart" height="180"></canvas>
+        <div class="bottom-stat">
+            <small>Total Steps</small>
+            <h2>{{ latest_vital.steps or '0' }}</h2>
+        </div>
+    </div>
+
+    <div class="card chart-section">
+        <div class="card-header">
+            <h3>Sleep Analysis</h3>
+            <small>Quality Breakdown</small>
+        </div>
+        <div class="chart-wrapper">
+            <canvas id="sleepChart"></canvas>
+            <div class="center-text">{{ latest_vital.sleep_hours or '0' }}h</div>
+        </div>
+        <div class="legend-row">
+            <span><span class="dot blue"></span> Deep</span>
+            <span><span class="dot light"></span> Light</span>
+            <span><span class="dot purple"></span> REM</span>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+{% endblock %}

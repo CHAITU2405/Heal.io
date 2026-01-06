@@ -1,0 +1,47 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="analytics-layout">
+    <div class="card viz-card">
+        <div class="viz-header">
+            <h3>3D Vital Signs Time-Series</h3>
+            <p>Real-time Telemetry Stream</p>
+        </div>
+        <div id="three-container"></div>
+        <div class="viz-controls">
+            <button><i class="fa-solid fa-pause"></i></button>
+            <button><i class="fa-solid fa-rotate"></i></button>
+        </div>
+    </div>
+
+    <div class="analytics-sidebar">
+        <div class="card info-dark">
+            <div class="icon-header"><i class="fa-solid fa-wave-square"></i></div>
+            <h3>Model Interpretation</h3>
+            <p>Visualizing correlation between Heart Rate (red), SpO2 (blue), and Blood Pressure (teal) over time. Notice the dip in SpO2 at T=42 correlating with the HR spike.</p>
+            <div class="play-hint"><i class="fa-solid fa-circle-info"></i> Use Play/Pause to control simulation.</div>
+        </div>
+
+        <div class="card alerts-card">
+            <h3><i class="fa-solid fa-triangle-exclamation"></i> Alerts</h3>
+            {% if recent_anomalies %}
+                {% for anomaly in recent_anomalies[:2] %}
+                <div class="alert {% if anomaly.severity == 'critical' %}error{% else %}warning{% endif %}">
+                    <strong>ANOMALY DETECTED</strong>
+                    <span>{{ anomaly.anomaly_type|replace('_', ' ')|title }}</span>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="alert" style="background: #d1fae5; color: #065f46; border-color: #a7f3d0;">
+                <strong>ALL CLEAR</strong>
+                <span>No anomalies detected</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/3d-viz.js') }}"></script>
+{% endblock %}

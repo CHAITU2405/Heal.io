@@ -1,0 +1,11 @@
+Flask
+Flask-SQLAlchemy
+pandas
+numpy
+scikit-learn
+tensorflow
+pennylane
+matplotlib
+reportlab
+werkzeug
+

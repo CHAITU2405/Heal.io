@@ -1,0 +1,91 @@
+{% extends "layout.html" %}
+
+{% block page_title %}Care Network{% endblock %}
+{% block page_subtitle %}Connect with medical practitioners and manage your care team.{% endblock %}
+
+{% block content %}
+{% if connected_doctors %}
+<div class="panel-bespoke" style="margin-bottom: 2rem;">
+    <h3 style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 1.5rem;">
+        Connected Doctors
+    </h3>
+    <div style="display: flex; flex-direction: column; gap: 1rem;">
+        {% for rel in connected_doctors %}
+        <div style="padding: 1.5rem; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center;">
+            <div style="flex: 1;">
+                <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem;">Dr. {{ rel.doctor.first_name }} {{ rel.doctor.last_name }}</h4>
+                {% if rel.doctor.specialization %}
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 0.25rem;">{{ rel.doctor.specialization }}</p>
+                {% endif %}
+                <div class="mono" style="font-size: 0.7rem; color: var(--text-muted);">
+                    Connected: {{ rel.accepted_at.strftime('%b %d, %Y')|upper }}
+                </div>
+            </div>
+            <a href="{{ url_for('patient_vitals') }}" class="btn-bespoke btn-bespoke-outline">
+                <span class="material-icons-round">show_chart</span> View My Vitals
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% if pending_requests %}
+<div class="panel-bespoke" style="margin-bottom: 2rem; border-left: 3px solid var(--warning); background: rgba(245, 158, 11, 0.05);">
+    <h3 style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 1.5rem;">
+        Pending Requests
+    </h3>
+    <div style="display: flex; flex-direction: column; gap: 1rem;">
+        {% for rel in pending_requests %}
+        <div style="padding: 1.5rem; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center;">
+            <div style="flex: 1;">
+                <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem;">Dr. {{ rel.doctor.first_name }} {{ rel.doctor.last_name }}</h4>
+                {% if rel.doctor.specialization %}
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 0.25rem;">{{ rel.doctor.specialization }}</p>
+                {% endif %}
+                <div class="mono" style="font-size: 0.7rem; color: var(--text-muted);">
+                    Requested: {{ rel.requested_at.strftime('%b %d, %Y')|upper }}
+                </div>
+            </div>
+            <span class="badge-bespoke badge-bespoke-warning">Pending</span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<div class="panel-bespoke">
+    <h3 style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 1.5rem;">
+        Available Doctors
+    </h3>
+    <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1.5rem;">Select a doctor to connect with</p>
+    
+    {% if available_doctors %}
+    <div style="display: flex; flex-direction: column; gap: 1rem;">
+        {% for doctor in available_doctors %}
+        <div style="padding: 1.5rem; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border); border-radius: var(--radius-md); display: flex; justify-content: space-between; align-items: center;">
+            <div style="flex: 1;">
+                <h4 style="font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem;">Dr. {{ doctor.first_name }} {{ doctor.last_name }}</h4>
+                {% if doctor.specialization %}
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 0.25rem;">{{ doctor.specialization }}</p>
+                {% endif %}
+                {% if doctor.license_number %}
+                <div class="mono" style="font-size: 0.7rem; color: var(--text-muted);">License: {{ doctor.license_number }}</div>
+                {% endif %}
+            </div>
+            <form method="POST" action="{{ url_for('request_doctor', doctor_id=doctor.id) }}" style="display: inline;">
+                <button type="submit" class="btn-bespoke btn-bespoke-primary">
+                    <span class="material-icons-round">person_add</span> Connect
+                </button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div style="padding: 3rem; text-align: center; color: var(--text-muted);">
+        <span class="material-icons-round" style="font-size: 3rem; color: var(--text-muted); opacity: 0.5; margin-bottom: 1rem; display: block;">medical_services</span>
+        <p>No available doctors at the moment.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
